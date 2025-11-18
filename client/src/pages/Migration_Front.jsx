@@ -14,6 +14,7 @@ import Navbar from "../components/Navbar";
 import axios from "axios";
 import { UserContext } from "../Context/userContext";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 const JobListings = () => {
   const userData = useContext(UserContext);
@@ -33,6 +34,9 @@ const JobListings = () => {
     companies: true,
   });
 
+  // Mobile filter drawer state
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   const API_URL =
     import.meta.env.VITE_APP_API_URL || "http://localhost:5000/api";
 
@@ -40,10 +44,9 @@ const JobListings = () => {
     const fetchJobs = async () => {
       try {
         const response = await axios.get(`${API_URL}/jobs`);
-
         setJobs(response.data);
       } catch (err) {
-        console.log(Error);
+        console.log(err);
       }
     };
 
@@ -53,25 +56,21 @@ const JobListings = () => {
   // Get unique values for filters
   const industries = [...new Set(jobs.map((job) => job.Industry_Type))];
   const locations = [...new Set(jobs.map((job) => job.Location.City_Name))];
-  const companies = [...new Set(jobs.map((job) => job.Company_Name))]; // Get unique companies
+  const companies = [...new Set(jobs.map((job) => job.Company_Name))];
 
   // Filter functions
   const filteredJobs = jobs
     .filter((job) => {
-      // Filter by industry
       const industryMatch =
         jobFilters.industry === "" || job.Industry_Type === jobFilters.industry;
 
-      // Filter by location
       const locationMatch =
         jobFilters.location === "" ||
         job.Location.City_Name === jobFilters.location;
 
-      // Filter by company
       const companyMatch =
         jobFilters.company === "" || job.Company_Name === jobFilters.company;
 
-      // Filter by search term
       const searchMatch =
         searchTerm === "" ||
         job.Title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -87,7 +86,6 @@ const JobListings = () => {
       return salaryB - salaryA; // High to low
     });
 
-  // Toggle section expansion
   const toggleSection = (section) => {
     setExpandedSections({
       ...expandedSections,
@@ -95,7 +93,6 @@ const JobListings = () => {
     });
   };
 
-  // Clear filters
   const clearFilters = () => {
     setJobFilters({
       industry: "",
@@ -105,7 +102,6 @@ const JobListings = () => {
     setSearchTerm("");
   };
 
-  // Get active filters count
   const getActiveFilterCount = () => {
     return (
       Object.values(jobFilters).filter((value) => value !== "").length +
@@ -120,9 +116,10 @@ const JobListings = () => {
         itemId: Id,
         itemType: "Job",
       });
-
+      toast.success("Saved successfully!");
       console.log("job saved successfully:", response.data);
     } catch (error) {
+      toast.error("Something went wrong");
       console.log("Error saving policy:", error);
     }
   };
@@ -130,9 +127,140 @@ const JobListings = () => {
   return (
     <div className="min-h-screen bg-[#f6f6ef]">
       <Navbar />
-      <div className="flex w-full mx-auto">
-        {/* Sidebar Filters */}
-        <div className="w-1/4 p-9  border-r border-t border-[#fce3cd] bg-[#fce3cd]/70 drop-shadow-r-xl">
+
+      {/* Mobile filter drawer */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowMobileFilters(false)}
+          />
+          <div className="absolute left-0 top-0 bottom-0 w-11/12 max-w-xs bg-[#fce3cd]/95 p-6 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-amber-900">Filters</h2>
+              <button
+                className="text-amber-800 font-medium"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Mobile filters reuse content (simplified) */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-bold text-amber-900 mb-2">Industries</h3>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {industries.map((industry, index) => (
+                    <label key={index} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        className="mr-2 h-4 w-4 accent-amber-600"
+                        checked={jobFilters.industry === industry}
+                        onChange={() =>
+                          setJobFilters({
+                            ...jobFilters,
+                            industry:
+                              jobFilters.industry === industry ? "" : industry,
+                          })
+                        }
+                      />
+                      <span className="text-amber-900">{industry}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-amber-900 mb-2">Locations</h3>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {locations.map((location, index) => (
+                    <label key={index} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        className="mr-2 h-4 w-4 accent-amber-600"
+                        checked={jobFilters.location === location}
+                        onChange={() =>
+                          setJobFilters({
+                            ...jobFilters,
+                            location:
+                              jobFilters.location === location ? "" : location,
+                          })
+                        }
+                      />
+                      <span className="text-amber-900">{location}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-amber-900 mb-2">Companies</h3>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {companies.map((company, index) => (
+                    <label key={index} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        className="mr-2 h-4 w-4 accent-amber-600"
+                        checked={jobFilters.company === company}
+                        onChange={() =>
+                          setJobFilters({
+                            ...jobFilters,
+                            company:
+                              jobFilters.company === company ? "" : company,
+                          })
+                        }
+                      />
+                      <span className="text-amber-900">{company}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-amber-900">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-bold text-amber-900">Sort by Salary</h3>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mr-2 h-4 w-4 accent-amber-600"
+                      checked={sortBySalary}
+                      onChange={() => setSortBySalary(!sortBySalary)}
+                    />
+                    <span className="text-amber-900 text-sm">
+                      {sortBySalary ? "High → Low" : "Default"}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <button
+                  className="text-sm text-amber-700 hover:text-amber-900 font-medium"
+                  onClick={() => {
+                    setShowMobileFilters(false);
+                  }}
+                >
+                  Apply
+                </button>
+                <button
+                  className="text-sm text-amber-700 hover:text-amber-900 font-medium"
+                  onClick={() => {
+                    clearFilters();
+                    setShowMobileFilters(false);
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row w-full mx-auto">
+        {/* Sidebar Filters - hidden on small screens */}
+        <div className="hidden md:block md:w-1/4 p-9 border-r border-t border-[#fce3cd] bg-[#fce3cd]/70 drop-shadow-r-xl">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-amber-900">Filters</h2>
             {getActiveFilterCount() > 0 && (
@@ -288,15 +416,22 @@ const JobListings = () => {
         </div>
 
         {/* Main Content */}
-        <div className="w-3/4 p-5 border-t border-gray-300 bg-[#f6f6ef]">
+        <div className="w-full md:w-3/4 p-5 md:p-5 border-t border-gray-300 bg-[#f6f6ef]">
           {/* Header and Controls */}
-          <div className="flex justify-between items-center border-b border-gray-300 pb-3 mb-6">
+          <div className="flex items-center justify-between border-b border-gray-300 pb-3 mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-amber-900">
+              <h1 className="text-2xl md:text-3xl font-bold text-amber-900">
                 Job Listings
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                className="md:hidden text-sm px-3 py-1 bg-amber-100 text-amber-800 rounded"
+                onClick={() => setShowMobileFilters(true)}
+              >
+                Filters
+              </button>
+
               <span className="text-sm font-medium text-amber-800">
                 {filteredJobs.length} results
               </span>
@@ -325,12 +460,14 @@ const JobListings = () => {
           {/* Content Grid */}
           <div
             className={
-              viewMode === "grid" ? "grid grid-cols-2 gap-6" : "space-y-6"
+              viewMode === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 gap-6"
+                : "space-y-6"
             }
           >
             {filteredJobs.map((job, index) => (
               <motion.div
-                key={job._id}
+                key={job._id || index}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.05 }}
@@ -343,7 +480,9 @@ const JobListings = () => {
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold text-xl-900">{job.Title}</h3>
+                <h3 className="text-lg md:text-xl font-bold text-amber-900">
+                  {job.Title}
+                </h3>
 
                 <div className="flex items-center text-sm text-amber-800">
                   <Building className="h-4 w-4 mr-2 text-amber-700" />

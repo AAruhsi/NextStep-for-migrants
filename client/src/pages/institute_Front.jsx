@@ -1,9 +1,18 @@
 import { useState, useEffect, useContext } from "react";
-import { ChevronDown, ChevronRight, Grid, List, Search } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Grid,
+  List,
+  Search,
+  Filter,
+  X,
+} from "lucide-react"; // Added Filter and X icons
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { UserContext } from "../Context/userContext";
+import toast from "react-hot-toast";
 
 const Institues = () => {
   const userData = useContext(UserContext);
@@ -12,6 +21,10 @@ const Institues = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [courses, setcourses] = useState([]);
   const [institutes, setinstitutes] = useState([]);
+
+  // New state for mobile responsiveness
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   const [courseFilters, setCourseFilters] = useState({
     category: "",
     platform: "",
@@ -43,7 +56,7 @@ const Institues = () => {
         const response = await axios.get(`${API_URL}/courses`);
         const institutesResponse = await axios.get(`${API_URL}/institutes`);
 
-        console.log("institutes", institutesResponse.data);
+        console.log("institutes", response.data);
         setcourses(response.data);
         setinstitutes(institutesResponse.data);
       } catch (err) {
@@ -66,9 +79,6 @@ const Institues = () => {
   ];
   const degrees = [
     ...new Set(institutes.flatMap((institute) => institute.degreesOffered)),
-  ];
-  const accreditations = [
-    ...new Set(institutes.map((institute) => institute.accreditation)),
   ];
 
   // Filter functions
@@ -121,14 +131,6 @@ const Institues = () => {
     );
   });
 
-  // Toggle section expansion
-  // const toggleSection = (section) => {
-  //   setExpandedSections({
-  //     ...expandedSections,
-  //     [section]: !expandedSections[section],
-  //   });
-  // };
-
   // Clear filters
   const clearFilters = () => {
     if (view === "courses") {
@@ -160,28 +162,6 @@ const Institues = () => {
     establishmentYear: "",
   });
 
-  // Remove a specific filter
-  const removeFilter = (filterName) => {
-    setFilters({
-      ...filters,
-      [filterName]: filterName === "certification" ? null : "",
-    });
-  };
-
-  // Handle filter changes
-  const handleFilterChange = (filterName, value) => {
-    setFilters({
-      ...filters,
-      [filterName]: value,
-    });
-  };
-
-  // Count active filters
-  const activeFilterCount =
-    Object.entries(filters).filter(([key, value]) => {
-      return value !== "" && value !== null && value !== 0;
-    }).length + (searchTerm ? 1 : 0);
-
   // Get active filters count
   const getActiveFilterCount = () => {
     if (view === "courses") {
@@ -205,9 +185,10 @@ const Institues = () => {
         itemId: Id,
         itemType: str == "Courses" ? "Course" : "Institute",
       });
-
+      toast.success("Saved successfully!");
       console.log("course/institute saved successfully:", response.data);
     } catch (error) {
+      toast.error("Something went wrong!");
       console.log("Error saving policy:", error);
     }
   };
@@ -215,330 +196,383 @@ const Institues = () => {
   return (
     <div className="min-h-screen bg-[#f6f6ef]">
       <Navbar />
-      <div className="flex w-full  mx-auto">
-        {/* Sidebar Filters */}
-        <div className="w-1/4 p-6 border-r border-t border-gray-500 bg-[#fce3cd]/70 drop-shadow-r-xl overflow-y-auto max-h-[calc(100vh-64px)] sticky top-16">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-amber-900">Filters</h2>
+
+      {/* Mobile Sidebar Overlay - Closes menu when clicked */}
+      {showMobileFilters && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setShowMobileFilters(false)}
+        />
+      )}
+
+      <div className="flex flex-col md:flex-row w-full mx-auto relative">
+        <div
+          className={`
+          fixed inset-y-0 left-0 z-50 w-3/4 max-w-xs bg-[#fce3cd] overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl
+          md:translate-x-0 md:static md:w-1/4 md:bg-[#fce3cd]/70 md:shadow-none md:border-r md:border-t md:border-gray-500 md:sticky md:top-16 md:h-[calc(100vh-64px)]
+          ${showMobileFilters ? "translate-x-0" : "-translate-x-full"}
+        `}
+        >
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-amber-900">Filters</h2>
+
+              {/* Mobile Close Button */}
+              <button
+                className="md:hidden p-1 text-amber-900 hover:bg-amber-900/10 rounded"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              {getActiveFilterCount() > 0 && (
+                <button
+                  className="text-amber-800 hover:text-amber-600 text-sm font-medium hidden md:block"
+                  onClick={clearFilters}
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Clear All Button (visible only when filters active on mobile) */}
             {getActiveFilterCount() > 0 && (
               <button
-                className="text-amber-800 hover:text-amber-600 text-sm font-medium"
+                className="md:hidden text-amber-800 hover:text-amber-600 text-sm font-medium mb-4 w-full text-left"
                 onClick={clearFilters}
               >
-                Clear All
+                Clear All Filters
               </button>
             )}
-          </div>
 
-          {/* Search */}
-          <div className="mb-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-2 pl-8 border border-amber-900 rounded bg-white"
-              />
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-amber-900" />
+            {/* Search */}
+            <div className="mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full p-2 pl-8 border border-amber-900 rounded bg-white"
+                />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-amber-900" />
+              </div>
             </div>
+
+            {/* Course Filters */}
+            {view === "courses" && (
+              <>
+                {/* Categories */}
+                <div className="border-t border-amber-900 py-4">
+                  <div
+                    className="flex justify-between items-center cursor-pointer mb-3"
+                    onClick={() =>
+                      setExpandedSections({
+                        ...expandedSections,
+                        categories: !expandedSections.categories,
+                      })
+                    }
+                  >
+                    <h3 className="font-bold text-amber-900">Categories</h3>
+                    {expandedSections.categories ? (
+                      <ChevronDown className="h-5 w-5 text-amber-700" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-amber-700" />
+                    )}
+                  </div>
+                  {expandedSections.categories && (
+                    <div className="space-y-2">
+                      {categories.map((category, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              className="mr-2 h-4 w-4 accent-amber-600"
+                              checked={courseFilters.category === category}
+                              onChange={() =>
+                                setCourseFilters({
+                                  ...courseFilters,
+                                  category:
+                                    courseFilters.category === category
+                                      ? ""
+                                      : category,
+                                })
+                              }
+                            />
+                            <span className="text-amber-900">{category}</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Platforms */}
+                <div className="border-t border-amber-900 py-4">
+                  <div
+                    className="flex justify-between items-center cursor-pointer mb-3"
+                    onClick={() =>
+                      setExpandedSections({
+                        ...expandedSections,
+                        platforms: !expandedSections.platforms,
+                      })
+                    }
+                  >
+                    <h3 className="font-bold text-amber-900">Platforms</h3>
+                    {expandedSections.platforms ? (
+                      <ChevronDown className="h-5 w-5 text-amber-700" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-amber-700" />
+                    )}
+                  </div>
+                  {expandedSections.platforms && (
+                    <div className="space-y-2">
+                      {platforms.map((platform, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              className="mr-2 h-4 w-4 accent-amber-600"
+                              checked={courseFilters.platform === platform}
+                              onChange={() =>
+                                setCourseFilters({
+                                  ...courseFilters,
+                                  platform:
+                                    courseFilters.platform === platform
+                                      ? ""
+                                      : platform,
+                                })
+                              }
+                            />
+                            <span className="text-amber-900">{platform}</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Features */}
+                <div className="border-t border-amber-900 py-4">
+                  <div
+                    className="flex justify-between items-center cursor-pointer mb-3"
+                    onClick={() =>
+                      setExpandedSections({
+                        ...expandedSections,
+                        features: !expandedSections.features,
+                      })
+                    }
+                  >
+                    <h3 className="font-bold text-amber-900">Features</h3>
+                    {expandedSections.features ? (
+                      <ChevronDown className="h-5 w-5 text-amber-700" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-amber-700" />
+                    )}
+                  </div>
+                  {expandedSections.features && (
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-amber-900 mb-2">
+                          Certification
+                        </h4>
+                        <div className="flex items-center space-x-4">
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="certification"
+                              className="mr-2 h-4 w-4 accent-amber-600"
+                              checked={courseFilters.certification === true}
+                              onChange={() =>
+                                setCourseFilters({
+                                  ...courseFilters,
+                                  certification: true,
+                                })
+                              }
+                            />
+                            <span className="text-amber-900">Yes</span>
+                          </label>
+                          <label className="flex items-center">
+                            <input
+                              type="radio"
+                              name="certification"
+                              className="mr-2 h-4 w-4 accent-amber-600"
+                              checked={courseFilters.certification === false}
+                              onChange={() =>
+                                setCourseFilters({
+                                  ...courseFilters,
+                                  certification: false,
+                                })
+                              }
+                            />
+                            <span className="text-amber-900">No</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-amber-900 mb-2">
+                          Minimum Rating
+                        </h4>
+                        <input
+                          type="range"
+                          min="0"
+                          max="5"
+                          step="0.1"
+                          value={courseFilters.minRating}
+                          onChange={(e) =>
+                            setCourseFilters({
+                              ...courseFilters,
+                              minRating: Number.parseFloat(e.target.value),
+                            })
+                          }
+                          className="w-full accent-amber-600"
+                        />
+                        <div className="flex justify-between text-sm text-amber-900">
+                          <span>Any</span>
+                          <span>
+                            {courseFilters.minRating > 0
+                              ? courseFilters.minRating.toFixed(1)
+                              : "Any"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Institute Filters */}
+            {view === "institutes" && (
+              <>
+                {/* Degrees */}
+                <div className="border-t border-amber-900 py-4">
+                  <div
+                    className="flex justify-between items-center cursor-pointer mb-3"
+                    onClick={() =>
+                      setExpandedSections({
+                        ...expandedSections,
+                        degrees: !expandedSections.degrees,
+                      })
+                    }
+                  >
+                    <h3 className="font-bold text-amber-900">
+                      Degrees Offered
+                    </h3>
+                    {expandedSections.degrees ? (
+                      <ChevronDown className="h-5 w-5 text-amber-700" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-amber-700" />
+                    )}
+                  </div>
+                  {expandedSections.degrees && (
+                    <div className="space-y-2">
+                      {degrees.map((degree, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              className="mr-2 h-4 w-4 accent-amber-600"
+                              checked={instituteFilters.degree === degree}
+                              onChange={() =>
+                                setInstituteFilters({
+                                  ...instituteFilters,
+                                  degree:
+                                    instituteFilters.degree === degree
+                                      ? ""
+                                      : degree,
+                                })
+                              }
+                            />
+                            <span className="text-amber-900">{degree}</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Locations */}
+                <div className="border-t border-amber-900 py-4">
+                  <div
+                    className="flex justify-between items-center cursor-pointer mb-3"
+                    onClick={() =>
+                      setExpandedSections({
+                        ...expandedSections,
+                        locations: !expandedSections.locations,
+                      })
+                    }
+                  >
+                    <h3 className="font-bold text-amber-900">Locations</h3>
+                    {expandedSections.locations ? (
+                      <ChevronDown className="h-5 w-5 text-amber-700" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-amber-700" />
+                    )}
+                  </div>
+                  {expandedSections.locations && (
+                    <div className="space-y-2">
+                      {locations.map((location, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              className="mr-2 h-4 w-4 accent-amber-600"
+                              checked={instituteFilters.location === location}
+                              onChange={() =>
+                                setInstituteFilters({
+                                  ...instituteFilters,
+                                  location:
+                                    instituteFilters.location === location
+                                      ? ""
+                                      : location,
+                                })
+                              }
+                            />
+                            <span className="text-amber-900">{location}</span>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-
-          {/* Course Filters */}
-          {view === "courses" && (
-            <>
-              {/* Categories */}
-              <div className="border-t border-amber-900 py-4">
-                <div
-                  className="flex justify-between items-center cursor-pointer mb-3"
-                  onClick={() =>
-                    setExpandedSections({
-                      ...expandedSections,
-                      categories: !expandedSections.categories,
-                    })
-                  }
-                >
-                  <h3 className="font-bold text-amber-900">Categories</h3>
-                  {expandedSections.categories ? (
-                    <ChevronDown className="h-5 w-5 text-amber-700" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-amber-700" />
-                  )}
-                </div>
-                {expandedSections.categories && (
-                  <div className="space-y-2">
-                    {categories.map((category, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            className="mr-2 h-4 w-4 accent-amber-600"
-                            checked={courseFilters.category === category}
-                            onChange={() =>
-                              setCourseFilters({
-                                ...courseFilters,
-                                category:
-                                  courseFilters.category === category
-                                    ? ""
-                                    : category,
-                              })
-                            }
-                          />
-                          <span className="text-amber-900">{category}</span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Platforms */}
-              <div className="border-t border-amber-900 py-4">
-                <div
-                  className="flex justify-between items-center cursor-pointer mb-3"
-                  onClick={() =>
-                    setExpandedSections({
-                      ...expandedSections,
-                      platforms: !expandedSections.platforms,
-                    })
-                  }
-                >
-                  <h3 className="font-bold text-amber-900">Platforms</h3>
-                  {expandedSections.platforms ? (
-                    <ChevronDown className="h-5 w-5 text-amber-700" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-amber-700" />
-                  )}
-                </div>
-                {expandedSections.platforms && (
-                  <div className="space-y-2">
-                    {platforms.map((platform, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            className="mr-2 h-4 w-4 accent-amber-600"
-                            checked={courseFilters.platform === platform}
-                            onChange={() =>
-                              setCourseFilters({
-                                ...courseFilters,
-                                platform:
-                                  courseFilters.platform === platform
-                                    ? ""
-                                    : platform,
-                              })
-                            }
-                          />
-                          <span className="text-amber-900">{platform}</span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Features */}
-              <div className="border-t border-amber-900 py-4">
-                <div
-                  className="flex justify-between items-center cursor-pointer mb-3"
-                  onClick={() =>
-                    setExpandedSections({
-                      ...expandedSections,
-                      features: !expandedSections.features,
-                    })
-                  }
-                >
-                  <h3 className="font-bold text-amber-900">Features</h3>
-                  {expandedSections.features ? (
-                    <ChevronDown className="h-5 w-5 text-amber-700" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-amber-700" />
-                  )}
-                </div>
-                {expandedSections.features && (
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium text-amber-900 mb-2">
-                        Certification
-                      </h4>
-                      <div className="flex items-center space-x-4">
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="certification"
-                            className="mr-2 h-4 w-4 accent-amber-600"
-                            checked={courseFilters.certification === true}
-                            onChange={() =>
-                              setCourseFilters({
-                                ...courseFilters,
-                                certification: true,
-                              })
-                            }
-                          />
-                          <span className="text-amber-900">Yes</span>
-                        </label>
-                        <label className="flex items-center">
-                          <input
-                            type="radio"
-                            name="certification"
-                            className="mr-2 h-4 w-4 accent-amber-600"
-                            checked={courseFilters.certification === false}
-                            onChange={() =>
-                              setCourseFilters({
-                                ...courseFilters,
-                                certification: false,
-                              })
-                            }
-                          />
-                          <span className="text-amber-900">No</span>
-                        </label>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-amber-900 mb-2">
-                        Minimum Rating
-                      </h4>
-                      <input
-                        type="range"
-                        min="0"
-                        max="5"
-                        step="0.1"
-                        value={courseFilters.minRating}
-                        onChange={(e) =>
-                          setCourseFilters({
-                            ...courseFilters,
-                            minRating: Number.parseFloat(e.target.value),
-                          })
-                        }
-                        className="w-full accent-amber-600"
-                      />
-                      <div className="flex justify-between text-sm text-amber-900">
-                        <span>Any</span>
-                        <span>
-                          {courseFilters.minRating > 0
-                            ? courseFilters.minRating.toFixed(1)
-                            : "Any"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Institute Filters */}
-          {view === "institutes" && (
-            <>
-              {/* Degrees */}
-              <div className="border-t border-amber-900 py-4">
-                <div
-                  className="flex justify-between items-center cursor-pointer mb-3"
-                  onClick={() =>
-                    setExpandedSections({
-                      ...expandedSections,
-                      degrees: !expandedSections.degrees,
-                    })
-                  }
-                >
-                  <h3 className="font-bold text-amber-900">Degrees Offered</h3>
-                  {expandedSections.degrees ? (
-                    <ChevronDown className="h-5 w-5 text-amber-700" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-amber-700" />
-                  )}
-                </div>
-                {expandedSections.degrees && (
-                  <div className="space-y-2">
-                    {degrees.map((degree, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            className="mr-2 h-4 w-4 accent-amber-600"
-                            checked={instituteFilters.degree === degree}
-                            onChange={() =>
-                              setInstituteFilters({
-                                ...instituteFilters,
-                                degree:
-                                  instituteFilters.degree === degree
-                                    ? ""
-                                    : degree,
-                              })
-                            }
-                          />
-                          <span className="text-amber-900">{degree}</span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Locations */}
-              <div className="border-t border-amber-900 py-4">
-                <div
-                  className="flex justify-between items-center cursor-pointer mb-3"
-                  onClick={() =>
-                    setExpandedSections({
-                      ...expandedSections,
-                      locations: !expandedSections.locations,
-                    })
-                  }
-                >
-                  <h3 className="font-bold text-amber-900">Locations</h3>
-                  {expandedSections.locations ? (
-                    <ChevronDown className="h-5 w-5 text-amber-700" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-amber-700" />
-                  )}
-                </div>
-                {expandedSections.locations && (
-                  <div className="space-y-2">
-                    {locations.map((location, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            className="mr-2 h-4 w-4 accent-amber-600"
-                            checked={instituteFilters.location === location}
-                            onChange={() =>
-                              setInstituteFilters({
-                                ...instituteFilters,
-                                location:
-                                  instituteFilters.location === location
-                                    ? ""
-                                    : location,
-                              })
-                            }
-                          />
-                          <span className="text-amber-900">{location}</span>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
         </div>
 
         {/* Main Content */}
-        <div className="w-3/4 p-5 border-t border-gray-300 bg-[#f6f6ef]">
+        <div className="w-full md:w-3/4 p-5 border-t border-gray-300 bg-[#f6f6ef]">
+          {/* Mobile Filter Toggle Button */}
+          <div className="md:hidden mb-4">
+            <button
+              onClick={() => setShowMobileFilters(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-800 text-white rounded-lg shadow hover:bg-amber-900 transition-colors"
+            >
+              <Filter size={18} />
+              <span>Filters & Search</span>
+              {getActiveFilterCount() > 0 && (
+                <span className="bg-white text-amber-900 text-xs font-bold px-1.5 rounded-full">
+                  {getActiveFilterCount()}
+                </span>
+              )}
+            </button>
+          </div>
+
           {/* Tabs and Controls */}
-          <div className="flex justify-between items-center border-b border-gray-300 pb-3 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-300 pb-3 mb-6 gap-4">
             <div className="flex space-x-8">
               <button
                 className={`text-lg font-bold pb-2 ${
@@ -561,7 +595,8 @@ const Institues = () => {
                 INSTITUTES
               </button>
             </div>
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center justify-between w-full sm:w-auto space-x-4">
               <span className="text-sm font-medium text-amber-800">
                 {view === "courses"
                   ? filteredCourses.length
@@ -593,7 +628,9 @@ const Institues = () => {
           {/* Content Grid */}
           <div
             className={
-              viewMode === "grid" ? "grid grid-cols-2 gap-6" : "space-y-6"
+              viewMode === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 gap-6" // Added responsive grid cols
+                : "space-y-6"
             }
           >
             {view === "courses"
@@ -613,19 +650,19 @@ const Institues = () => {
                     </div>
                     <h3 className="text-xl font-bold mb-3">{course.Name}</h3>
                     <div className="grid gap-2 mb-4">
-                      <span>
+                      <span className="flex flex-wrap items-center gap-4">
                         <span className="text-sm">
                           Duration: {course.duration}{" "}
                         </span>
                         {course.certification && (
-                          <span className="ml-10 text-sm text-green-700 rounded-full bg-green-200 py-1 px-2">
+                          <span className="text-sm text-green-700 rounded-full bg-green-200 py-1 px-2">
                             Certification
                           </span>
                         )}
                       </span>
                       <div className="text-sm">Rating: {course.rating} ⭐</div>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <a
                         href={course.url}
                         target="_blank"
@@ -677,7 +714,7 @@ const Institues = () => {
                         ))}
                       </div>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <a
                         href={institute.websiteLink}
                         target="_blank"

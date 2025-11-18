@@ -2,6 +2,7 @@ const State = require("../models/State");
 
 exports.getStates = async (req, res) => {
   try {
+    console.log("fetching state data");
     const states = await State.find({}); // Fetch all states
     res.status(200).json(states);
   } catch (error) {

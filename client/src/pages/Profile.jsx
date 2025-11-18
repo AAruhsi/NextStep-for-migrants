@@ -16,6 +16,7 @@ import {
   Save,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 // Components
 import Navbar from "../components/Navbar.jsx";
@@ -47,17 +48,15 @@ const Profile = () => {
       if (!userData || !userData.id) return;
 
       try {
-        console.log("Fetching profile for user ID:", userData.id);
-
         const [profileRes, savedItemsRes] = await Promise.all([
           axios.get(`${API_URL}/user/profile/${userData.id}`),
           axios.get(`${API_URL}/user/getSavedItem/${userData.id}`),
         ]);
-
-        console.log("User profile data:", savedItemsRes.data);
         setData(profileRes.data);
+        toast.success("Profile fetched successfully!"); // Add success toast
       } catch (error) {
         console.error("Error fetching user profile:", error);
+        toast.error("Error fetching user profile!"); // Add error toast
       }
     };
 
@@ -125,8 +124,6 @@ const Profile = () => {
         updatedData
       );
 
-      console.log("Updated user profile:", res.data);
-
       // Update the displayed data in local state
       setData((prev) => ({
         ...prev,
@@ -155,10 +152,10 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f8f4f1] to-[#f4ebe4] px-4 pt-8 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-[#f8f4f1] to-[#f4ebe4]  font-sans">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="max-w-6xl mx-auto py-5 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Profile Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -172,8 +169,8 @@ const Profile = () => {
               <img
                 src={
                   Data.user?.Gender?.toLowerCase() === "female"
-                    ? { femaleAvatar }
-                    : { maleAvatar }
+                    ? femaleAvatar // Use the variable directly
+                    : maleAvatar // Use the variable directly
                 }
                 alt="Profile Avatar"
                 className="w-28 h-28 rounded-full border-4 border-[#decdbd] shadow-md transition-all duration-300 hover:scale-105 hover:ring hover:ring-[#cdb6a2] bg-white"

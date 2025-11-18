@@ -37,6 +37,4 @@ const courseSchema = new mongoose.Schema({
 
 courseSchema.plugin(AutoIncrement, { inc_field: "Course_ID", start_seq: 1 });
 
-const Course = mongoose.model("Course", courseSchema);
-
-module.exports = Course;
+const Course = (module.exports = mongoose.model("Course", courseSchema));

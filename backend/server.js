@@ -4,7 +4,6 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 
 const userRoutes = require("./routes/userRoutes");
-const generalRoutes = require("./routes/generalRoutes");
 const stateRoutes = require("./routes/stateroutes");
 const policyRoutes = require("./routes/policyRoutes");
 const instituteRoutes = require("./routes/instituteRoutes");
@@ -23,7 +22,7 @@ app.use(express.json());
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://next-step-frontend.vercel.app",
+  // "https://next-step-frontend.vercel.app",
 ];
 //Middleware
 app.use(
@@ -40,7 +39,6 @@ app.use(
 );
 
 app.use("/api/user", userRoutes);
-app.use("/api/general", generalRoutes);
 app.use("/api/cities", cityRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/state", stateRoutes);

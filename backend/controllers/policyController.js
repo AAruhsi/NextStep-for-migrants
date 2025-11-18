@@ -3,15 +3,14 @@ const Policy = require("../models/Policy");
 exports.getPolicies = async (req, res) => {
   try {
     const { location } = req.query;
-
     let policies;
     if (location) {
+      // policies = await Policy.find();
       policies = await Policy.find({ Region: location }).populate({
         path: "Region",
         select: "State_Name",
       });
     }
-
     res.status(200).json(policies);
   } catch (error) {
     console.error("Error fetching policies:", error);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_APP_API_URL || "http://localhost:5000/api";
 
@@ -92,19 +93,17 @@ const Signup = () => {
         password: formData.password,
       };
 
-      console.log("Sending Data:", requestData);
-
       await axios.post(`${API_URL}/user/register`, requestData, {
         headers: {
           "Content-Type": "application/json",
         },
       });
 
-      alert("Signup successful!");
+      toast.success("Signup successful!");
       navigate("/login"); // Redirect to login page
     } catch (error) {
       console.error("Error signing up:", error.response?.data || error.message);
-      alert(
+      toast.error(
         `Signup failed: ${error.response?.data?.error || "Please try again."}`
       );
     }

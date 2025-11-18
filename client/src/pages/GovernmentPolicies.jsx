@@ -10,10 +10,13 @@ import {
   FileText,
   MapPin,
   Building,
+  Filter, // Import Filter icon
+  X, // Import X (close) icon
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 const GovernmentPolicies = () => {
   const { userData, isLoggedIn } = useContext(UserContext);
@@ -33,16 +36,19 @@ const GovernmentPolicies = () => {
     Years: true,
   });
 
+  // New state for mobile sidebar toggle
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   const API_URL =
     import.meta.env.VITE_APP_API_URL || "http://localhost:5000/api";
 
-  const location = userData.State || "";
+  const locationObj = userData.State || "";
 
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
         const response = await axios.get(`${API_URL}/policies`, {
-          params: { location },
+          params: { location: locationObj._id },
         });
         setPolicies(response.data);
       } catch (err) {
@@ -155,8 +161,10 @@ const GovernmentPolicies = () => {
           },
         }
       );
+      toast.success("Saved successfully!");
       console.log("Policy saved successfully:", response.data);
     } catch (error) {
+      toast.error("Something went wrong");
       console.log("Error saving policy:", error);
     }
   };
@@ -165,164 +173,213 @@ const GovernmentPolicies = () => {
     <div className="min-h-screen bg-[#f6f6ef]">
       <Navbar />
       {isLoggedIn && (
-        <div className="flex w-full mx-auto">
+        <div className="flex flex-col md:flex-row w-full mx-auto relative">
+          {/* Mobile Filter Toggle Button (Visible only on small screens) */}
+          <div className="md:hidden p-4 bg-[#fce3cd]/50 border-b border-[#fce3cd] flex justify-between items-center sticky top-0 z-30 backdrop-blur-sm">
+            <h1 className="text-xl font-bold text-amber-900">Policies</h1>
+            <button
+              onClick={() => setShowMobileFilters(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 rounded-lg text-amber-900 shadow-sm text-sm font-medium active:scale-95 transition-transform"
+            >
+              <Filter className="w-4 h-4" />
+              Filters{" "}
+              {getActiveFilterCount() > 0 && `(${getActiveFilterCount()})`}
+            </button>
+          </div>
+
+          {/* Mobile Overlay Backdrop */}
+          {showMobileFilters && (
+            <div
+              className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              onClick={() => setShowMobileFilters(false)}
+            />
+          )}
+
           {/* Sidebar Filters */}
-          <div className="w-1/4 p-6 border-r border-t border-gray-500 bg-[#fce3cd]/70 drop-shadow-r-xl overflow-y-auto max-h-[calc(100vh-64px)] sticky top-16">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-amber-900">Filters</h2>
+          <div
+            className={`
+              fixed inset-y-0 left-0 z-50 w-3/4 max-w-xs bg-[#fce3cd] shadow-2xl transform transition-transform duration-300 ease-in-out overflow-y-auto
+              md:translate-x-0 md:static md:w-1/4 md:shadow-none md:h-auto md:border-r md:border-t md:border-gray-500 md:bg-[#fce3cd]/70 md:sticky md:top-16 md:max-h-[calc(100vh-64px)]
+              ${showMobileFilters ? "translate-x-0" : "-translate-x-full"}
+            `}
+          >
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-amber-900">Filters</h2>
+
+                {/* Close Button (Mobile Only) */}
+                <button
+                  className="md:hidden p-1 hover:bg-amber-200 rounded-full transition-colors"
+                  onClick={() => setShowMobileFilters(false)}
+                >
+                  <X className="w-6 h-6 text-amber-900" />
+                </button>
+
+                {/* Clear All (Desktop Only) */}
+                {getActiveFilterCount() > 0 && (
+                  <button
+                    className="hidden md:block text-amber-800 hover:text-amber-600 text-sm font-medium"
+                    onClick={clearFilters}
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {/* Search */}
+              <div className="mb-6">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search policies..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value || "")}
+                    className="w-full p-2 pl-8 border border-amber-900 rounded bg-white"
+                  />
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-amber-900" />
+                </div>
+              </div>
+
+              {/* Mobile Clear All Button */}
               {getActiveFilterCount() > 0 && (
                 <button
-                  className="text-amber-800 hover:text-amber-600 text-sm font-medium"
+                  className="md:hidden w-full text-center mb-4 py-2 text-sm bg-amber-100 text-amber-800 rounded border border-amber-200"
                   onClick={clearFilters}
                 >
-                  Clear All
+                  Clear All Filters
                 </button>
               )}
-            </div>
 
-            {/* Search */}
-            <div className="mb-6">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search policies..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value || "")}
-                  className="w-full p-2 pl-8 border border-amber-900 rounded bg-white"
-                />
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-amber-900" />
-              </div>
-            </div>
-
-            {/* Departments */}
-            <div className="border-t border-amber-900 py-4">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-3"
-                onClick={() => toggleSection("Departments")}
-              >
-                <h3 className="font-bold text-amber-900">Departments</h3>
-                {expandedSections.Departments ? (
-                  <ChevronDown className="h-5 w-5 text-amber-700" />
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-amber-700" />
+              {/* Departments */}
+              <div className="border-t border-amber-900 py-4">
+                <div
+                  className="flex justify-between items-center cursor-pointer mb-3"
+                  onClick={() => toggleSection("Departments")}
+                >
+                  <h3 className="font-bold text-amber-900">Departments</h3>
+                  {expandedSections.Departments ? (
+                    <ChevronDown className="h-5 w-5 text-amber-700" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-amber-700" />
+                  )}
+                </div>
+                {expandedSections.Departments && (
+                  <div className="space-y-2">
+                    {Departments.map((Department, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            className="mr-2 h-4 w-4 accent-amber-600"
+                            checked={policyFilters.Department === Department}
+                            onChange={() =>
+                              setPolicyFilters({
+                                ...policyFilters,
+                                Department:
+                                  policyFilters.Department === Department
+                                    ? ""
+                                    : Department,
+                              })
+                            }
+                          />
+                          <span className="text-amber-900">{Department}</span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-              {expandedSections.Departments && (
-                <div className="space-y-2">
-                  {Departments.map((Department, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="mr-2 h-4 w-4 accent-amber-600"
-                          checked={policyFilters.Department === Department}
-                          onChange={() =>
-                            setPolicyFilters({
-                              ...policyFilters,
-                              Department:
-                                policyFilters.Department === Department
-                                  ? ""
-                                  : Department,
-                            })
-                          }
-                        />
-                        <span className="text-amber-900">{Department}</span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Status */}
-            <div className="border-t border-amber-900 py-4">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-3"
-                onClick={() => toggleSection("Status")}
-              >
-                <h3 className="font-bold text-amber-900">Status</h3>
-                {expandedSections.Status ? (
-                  <ChevronDown className="h-5 w-5 text-amber-700" />
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-amber-700" />
+              {/* Status */}
+              <div className="border-t border-amber-900 py-4">
+                <div
+                  className="flex justify-between items-center cursor-pointer mb-3"
+                  onClick={() => toggleSection("Status")}
+                >
+                  <h3 className="font-bold text-amber-900">Status</h3>
+                  {expandedSections.Status ? (
+                    <ChevronDown className="h-5 w-5 text-amber-700" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-amber-700" />
+                  )}
+                </div>
+                {expandedSections.Status && (
+                  <div className="space-y-2">
+                    {Statuses.map((Status, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            className="mr-2 h-4 w-4 accent-amber-600"
+                            checked={policyFilters.Status === Status}
+                            onChange={() =>
+                              setPolicyFilters({
+                                ...policyFilters,
+                                Status:
+                                  policyFilters.Status === Status ? "" : Status,
+                              })
+                            }
+                          />
+                          <span className="text-amber-900">{Status}</span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-              {expandedSections.Status && (
-                <div className="space-y-2">
-                  {Statuses.map((Status, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="mr-2 h-4 w-4 accent-amber-600"
-                          checked={policyFilters.Status === Status}
-                          onChange={() =>
-                            setPolicyFilters({
-                              ...policyFilters,
-                              Status:
-                                policyFilters.Status === Status ? "" : Status,
-                            })
-                          }
-                        />
-                        <span className="text-amber-900">{Status}</span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Years */}
-            <div className="border-t border-amber-900 py-4">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-3"
-                onClick={() => toggleSection("Years")}
-              >
-                <h3 className="font-bold text-amber-900">Year Published</h3>
-                {expandedSections.Years ? (
-                  <ChevronDown className="h-5 w-5 text-amber-700" />
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-amber-700" />
+              {/* Years */}
+              <div className="border-t border-amber-900 py-4">
+                <div
+                  className="flex justify-between items-center cursor-pointer mb-3"
+                  onClick={() => toggleSection("Years")}
+                >
+                  <h3 className="font-bold text-amber-900">Year Published</h3>
+                  {expandedSections.Years ? (
+                    <ChevronDown className="h-5 w-5 text-amber-700" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-amber-700" />
+                  )}
+                </div>
+                {expandedSections.Years && (
+                  <div className="space-y-2">
+                    {Years.map((Year, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between"
+                      >
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            className="mr-2 h-4 w-4 accent-amber-600"
+                            checked={policyFilters.Year === Year}
+                            onChange={() =>
+                              setPolicyFilters({
+                                ...policyFilters,
+                                Year: policyFilters.Year === Year ? "" : Year,
+                              })
+                            }
+                          />
+                          <span className="text-amber-900">{Year}</span>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-              {expandedSections.Years && (
-                <div className="space-y-2">
-                  {Years.map((Year, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between"
-                    >
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="mr-2 h-4 w-4 accent-amber-600"
-                          checked={policyFilters.Year === Year}
-                          onChange={() =>
-                            setPolicyFilters({
-                              ...policyFilters,
-                              Year: policyFilters.Year === Year ? "" : Year,
-                            })
-                          }
-                        />
-                        <span className="text-amber-900">{Year}</span>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="w-3/4 p-5 border-t border-gray-500 bg-[#f6f6ef]">
-            {/* Header and Controls */}
-            <div className="flex justify-between items-center border-b border-gray-300 pb-3 mb-6">
+          <div className="w-full md:w-3/4 p-4 md:p-5 border-t border-gray-500 bg-[#f6f6ef]">
+            {/* Header and Controls - Hidden on mobile as we have the top bar */}
+            <div className="hidden md:flex justify-between items-center border-b border-gray-300 pb-3 mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-amber-900">
                   Government Policies
@@ -354,10 +411,17 @@ const GovernmentPolicies = () => {
               </div>
             </div>
 
+            {/* Mobile Results count */}
+            <div className="md:hidden flex justify-between items-center mb-4 text-sm text-amber-800">
+              <span>{filteredPolicies.length} results found</span>
+            </div>
+
             {/* Content Grid */}
             <div
               className={
-                viewMode === "grid" ? "grid grid-cols-2 gap-6" : "space-y-6"
+                viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6"
+                  : "space-y-6"
               }
             >
               {filteredPolicies.map((policy, index) => (

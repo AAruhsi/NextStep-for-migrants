@@ -1,6 +1,8 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/userContext";
+import toast from "react-hot-toast";
+
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -9,14 +11,15 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
-    console.log("Login button clicked");
     e.preventDefault();
 
     try {
       await logIn(email, password);
+      toast.success("Login successfully!");
       setError("");
       navigate("/jobListings"); // Redirect on success
     } catch (err) {
+      toast.error("Login failed Plase try again!");
       setError("Invalid login credentials");
     }
   };
