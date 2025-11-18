@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import axios from "axios";
-import { UserContext } from "../Context/userContext";
+import { UserContext } from "../Providers/userContext";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 

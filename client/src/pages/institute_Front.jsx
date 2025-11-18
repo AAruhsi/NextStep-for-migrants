@@ -11,7 +11,7 @@ import {
 import Navbar from "../components/Navbar";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { UserContext } from "../Context/userContext";
+import { UserContext } from "../Providers/userContext";
 import toast from "react-hot-toast";
 
 const Institues = () => {

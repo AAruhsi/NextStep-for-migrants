@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { Menu, X, UserCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { UserContext } from "../Context/userContext";
+import { UserContext } from "../Providers/userContext";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

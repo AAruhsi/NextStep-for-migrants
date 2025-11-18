@@ -24,7 +24,7 @@ import RecommendationsSection from "../components/Recommendation.jsx";
 import femaleAvatar from "../assets/avatars/female.png";
 import maleAvatar from "../assets/avatars/male.png";
 // Context
-import { UserContext } from "../Context/userContext.jsx";
+import { UserContext } from "../Providers/userContext.jsx";
 
 const Profile = () => {
   const { userData } = useContext(UserContext);

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserContext } from "../Context/userContext";
+import { UserContext } from "../Providers/userContext";
 import toast from "react-hot-toast";
 
 const Login = () => {

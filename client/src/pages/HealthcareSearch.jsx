@@ -10,7 +10,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import Navbar from "../components/Navbar"; // Adjusted path based on typical structure
 import axios from "axios";
-import { UserContext } from "../Context/userContext";
+import { UserContext } from "../Providers/userContext";
 
 // Helper component to re-center map when facilities change
 const MapUpdater = ({ facilities }) => {
