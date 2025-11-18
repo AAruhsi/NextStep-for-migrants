@@ -22,7 +22,7 @@ app.use(express.json());
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  // "https://next-step-frontend.vercel.app",
+  "https://next-step-for-migrants.vercel.app",
 ];
 //Middleware
 app.use(
