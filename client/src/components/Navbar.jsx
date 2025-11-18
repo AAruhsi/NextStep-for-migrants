@@ -34,7 +34,7 @@ const Navbar = () => {
       <div className="max-w-screen mx-auto px-2 sm:px-6 ">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="">
             <Link to="/">
               <span className="text-2xl font-bold text-yellow-900">
                 Next<span className="font-semibold">step</span>

@@ -3,7 +3,6 @@ const Hospital = require("../models/Hospital");
 exports.getHospitals = async (req, res) => {
   try {
     const { location } = req.query;
-    console.log("this is location of hospital: ", location);
     let hospitals;
     if (location) {
       hospitals = await Hospital.find({ City_ID: location }).populate({

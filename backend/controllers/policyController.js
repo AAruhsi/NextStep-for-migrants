@@ -5,7 +5,6 @@ exports.getPolicies = async (req, res) => {
     const { location } = req.query;
     let policies;
     if (location) {
-      // policies = await Policy.find();
       policies = await Policy.find({ Region: location }).populate({
         path: "Region",
         select: "State_Name",

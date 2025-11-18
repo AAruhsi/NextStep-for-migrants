@@ -7,10 +7,27 @@ import {
   Popup,
   useMap,
 } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import Navbar from "../components/Navbar"; // Adjusted path based on typical structure
 import axios from "axios";
 import { UserContext } from "../Providers/userContext";
+
+// --- LEAFLET FIX STARTS HERE ---
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Explicitly import the marker images
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// Hack to fix the missing marker issue in production
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
 
 // Helper component to re-center map when facilities change
 const MapUpdater = ({ facilities }) => {
@@ -157,12 +174,14 @@ const HealthcareSearch = () => {
                 key={facility._id}
                 position={[facility.Latitude, facility.Longitude]}
               >
+                <span>📍{facility.Name}</span>
                 <Tooltip
                   direction="top"
                   offset={[0, -10]}
                   opacity={1}
                   permanent={false} // Changed to false so map isn't cluttered
                 >
+                  📍
                   {facility.Name}
                 </Tooltip>
                 <Popup>
