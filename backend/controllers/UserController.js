@@ -306,7 +306,7 @@ exports.getRecommendations = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
-
+  console.log("this is email: ", email);
   if (!user) {
     return res
       .status(200)
@@ -338,32 +338,67 @@ exports.forgotPassword = async (req, res) => {
     html: `<p>Your OTP is <b>${otp}</b>. It is valid for 15 minutes.</p>`,
   });
 
-  res.json({ message: "Reset link sent to email." });
+  res.status(200).json({ message: "Reset link sent to email." });
 };
 
 exports.resetPasswordWithOTP = async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: "Invalid email" });
+  try {
+    const { email, otp, newPassword } = req.body;
 
-  const token = await ResetToken.findOne({
-    userId: user._id,
-    otp,
-    used: false,
-    expiresAt: { $gt: new Date() },
-  });
+    // Validate input
+    if (!email || !otp || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Email, OTP, and new password are required" });
+    }
 
-  if (!token) {
-    return res.status(400).json({ message: "Invalid or expired OTP" });
+    // Validate password format
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&])[A-Za-z\d!@#$%^&]{6,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        error:
+          "Password must be at least 6 characters long and include at least one number and one special character.",
+      });
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email" });
+    }
+
+    // Verify OTP
+    const token = await ResetToken.findOne({
+      userId: user._id,
+      otp,
+      used: false,
+      expiresAt: { $gt: new Date() },
+    });
+
+    if (!token) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Hash new password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update user password using findByIdAndUpdate to avoid re-validation of other fields
+    await User.findByIdAndUpdate(
+      user._id,
+      { password: hashedPassword },
+      { new: true, runValidators: false } // runValidators: false skips schema validation
+    );
+
+    // Mark token as used
+    token.used = true;
+    await token.save();
+
+    res.status(200).json({ message: "Password reset successfully!" });
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
-
-  const saltRounds = 10;
-  user.password = await bcrypt.hash(newPassword, saltRounds);
-
-  await user.save();
-
-  token.used = true;
-  await token.save();
-
-  res.json({ message: "Password reset successfully!" });
 };

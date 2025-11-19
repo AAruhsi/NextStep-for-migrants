@@ -16,13 +16,15 @@ const ForgotPassword = () => {
   const handleForgotPassword = async (e) => {
     e.preventDefault();
     try {
+      console.log("clicked forgot pass");
       const response = await axios.post(`${API_URL}/user/forgotPassword`, {
         email,
       });
-
-      setMessage(response.data.message);
-      setStep(2); // Move to step 2
-      setError("");
+      if (response) {
+        setMessage(response.data.message);
+        setStep(2); // Move to step 2
+        setError("");
+      }
     } catch (err) {
       setError("Failed to send reset email. Please try again.");
       setMessage("");
