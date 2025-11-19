@@ -20,9 +20,9 @@ const app = express();
 app.use(express.json());
 
 const allowedOrigins = [
-  "http://localhost:3000",
   "http://localhost:5173",
   "https://next-step-for-migrants.vercel.app",
+  "https://next-step-for-migrants-aarushis-projects-2a54b349.vercel.app",
 ];
 //Middleware
 app.use(
